@@ -9,9 +9,9 @@ const port = process.env.PORT || 3000;
 const secretKey = '202319970717';
 
 const db = mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.190.100',
     user: 'root',
-    password: 'dadan199717',
+    password: '15032012',
     database: 'siedp'
 });
 
@@ -63,7 +63,7 @@ app.get('/api/dataprefix', (req, res) => {
 });
 
 app.get('/api/cobermasalah', (req, res) => {
-    db.query('SELECT * FROM cobermasalah_tmp', (err, results) => {
+    db.query('SELECT * FROM cobermasalah_tmp ORDER BY tanggalco DESC', (err, results) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ message: 'Internal Server Error', error: err.message });
