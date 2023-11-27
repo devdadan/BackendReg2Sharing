@@ -9,9 +9,9 @@ const port = process.env.PORT || 3000;
 const secretKey = '202319970717';
 
 const db = mysql.createConnection({
-    host: '192.168.190.100',
+    host: 'localhost',
     user: 'root',
-    password: '15032012',
+    password: 'dadan199717',
     database: 'siedp'
 });
 
@@ -51,6 +51,7 @@ app.get('/secure', verifyToken, (req, res) => {
         }
     });
 });
+
 app.get('/api/dataprefix', (req, res) => {
     db.query('SELECT * FROM prefix', (err, results) => {
         if (err) {
@@ -72,6 +73,52 @@ app.get('/api/cobermasalah', (req, res) => {
         res.json(results);
     });
 });
+app.get('/api/programrelease', (req, res) => {
+    db.query("SELECT a.id, a.nama_program, a.versi_program, IFNULL(b.tgl_rilis,'') AS tgl_rilis, IFNULL(b.perubahan, '') AS perubahan FROM table_program a LEFT JOIN table_simulasi b ON a.`nama_program`=b.`nama_program` AND a.`versi_program`=b.`versi` order by tgl_rilis DESC", (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error', error: err.message });
+        }
+        try {
+            const formattedResults = results.map(result => ({
+                id: result.id,
+                nama_program: result.nama_program,
+                versi_program: result.versi_program,
+                tgl_rilis: result.tgl_rilis,
+                perubahan: isJSON(result.perubahan) ? JSON.parse(result.perubahan) : null,
+            }));
+
+            res.json(formattedResults);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        }
+        
+    });
+});
+app.get('/api/programsimulasi', (req, res) => {
+    db.query("SELECT id,tgl_terima,nama_program,versi,perubahan FROM table_simulasi WHERE `status`='simulasi';", (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error', error: err.message });
+        }
+        try {
+            const formattedResults = results.map(result => ({
+                id: result.id,
+                tgl_terima : result.tgl_terima,
+                nama_program: result.nama_program,
+                versi_program: result.versi,
+                perubahan: isJSON(result.perubahan) ? JSON.parse(result.perubahan) : null,
+            }));
+
+            res.json(formattedResults);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        }
+        
+    });
+});
 
 function verifyToken(req, res, next) {
     const token = req.headers.authorization;
@@ -91,6 +138,14 @@ function verifyToken(req, res, next) {
     });
 }
 
+function isJSON(text) {
+    try {
+        JSON.parse(text);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
